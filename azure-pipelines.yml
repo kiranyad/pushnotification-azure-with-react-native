@@ -1,0 +1,49 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- raect-dotnet-tightly-coupled
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+      - checkout: self
+      - task: Npm@1
+        displayName: npm install
+        inputs:
+          workingDir: raect-dotnet-tightly-coupled/
+          verbose: false
+      - task: Npm@1
+        displayName: npm run build
+        inputs:
+          command: custom
+          workingDir: raect-dotnet-tightly-coupled/
+          verbose: false
+          customCommand: run build
+      - task: CmdLine@2
+        displayName: Command Line Script
+        inputs:
+          script: mv raect-dotnet-tightly-coupled/build react-demo-backend/wwwroot
+      - task: DotNetCoreCLI@2
+        displayName: dotnet restore
+        inputs:
+          command: restore
+          projects: react-demo-backend/react-demo-backend.csproj
+      - task: DotNetCoreCLI@2
+        displayName: dotnet build
+        inputs:
+          projects: react-demo-backend/react-demo-backend.csproj
+      - task: DotNetCoreCLI@2
+        displayName: dotnet publish
+        inputs:
+          command: publish
+          projects: react-demo-backend/react-demo-backend.csproj
+          arguments: -c Release -o $(Build.ArtifactStagingDirectory)/publish
+      - task: PublishBuildArtifacts@1
+        displayName: "Publish Artifact: react-demo-backend"
+        inputs:
+          PathtoPublish: $(Build.ArtifactStagingDirectory)/publish
+          ArtifactName: react-demo-backend
